@@ -1,26 +1,51 @@
-dnf module disable nodejs -y
-dnf module enable nodejs:18 -y
+MYSQL_PASSWORD=$1
+if [ -z "$MYSQL_PASSWORD" ]; then
+  echo Input MYSQL_PASSWORD is missing
+  exit 1
+fi
+component=backend
 
-dnf install nodejs -y
+source common.sh
 
-cp backend.service /etc/systemd/system/backend.service
+Head "Disable Default Version of NodeJS"
+dnf module disable nodejs -y &>>$log_file
+Stat $?
 
-useradd expense
+Head "Enable NodeJS18 Version"
+dnf module enable nodejs:18 -y &>>$log_file
+Stat $?
 
-rm -rf /app
-mkdir /app
+Head "Install NodeJS"
+dnf install nodejs -y &>>$log_file
+Stat $?
 
-curl -o /tmp/backend.zip https://expense-artifacts.s3.amazonaws.com/backend.zip
+Head "Configure Backend Service"
+cp backend.service /etc/systemd/system/backend.service &>>$log_file
+Stat $?
 
-cd /app
-unzip /tmp/backend.zip
+Head "Adding Application User"
+id expense &>>$log_file
+if [ "$?" -ne 0 ]; then
+  useradd expense &>>$log_file
+fi
+Stat $?
 
-npm install
+App_Prereq "/app"
 
-systemctl daemon-reload
-systemctl enable backend
-systemctl restart backend
+Head "Downloading Application Dependencies"
+npm install &>>$log_file
+Stat $?
 
-dnf install mysql -y
+Head "Reloading SystemD and Start Backend Service"
+systemctl daemon-reload &>>$log_file
+systemctl enable backend &>>$log_file
+systemctl restart backend &>>$log_file
+Stat $?
 
-mysql -h 172.31.87.14 -uroot -pExpenseApp@1 < /app/schema/backend.sql
+Head "Install MySQL Client"
+dnf install mysql -y &>>$log_file
+Stat $?
+
+Head "Load Schema"
+mysql -h mysql.krndevops.shop -uroot -p${MYSQL_PASSWORD} < /app/schema/backend.sql &>>$log_file
+Stat $?
