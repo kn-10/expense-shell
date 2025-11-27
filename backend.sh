@@ -47,7 +47,7 @@ dnf install mysql -y &>>$log_file
 Stat $?
 
 Head "Load Schema"
-mysql -h mysql.krndevops.shop -uroot -p${MYSQL_PASSWORD} < /app/schema/backend.sql &>>$log_file
+mysql -h mysql.kdevops.online -uroot -p${MYSQL_PASSWORD} < /app/schema/backend.sql &>>$log_file
 Stat $?
 
 

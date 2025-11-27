@@ -3,7 +3,7 @@ Description = Backend Service
 
 [Service]
 User=expense
-Environment=DB_HOST="mysql.krndevops.shop"
+Environment=DB_HOST="mysql.kdevops.online"
 ExecStart=/bin/node /app/index.js
 SyslogIdentifier=backend
 
